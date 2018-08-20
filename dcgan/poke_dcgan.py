@@ -1,6 +1,6 @@
 from __future__ import print_function, division
 
-from keras.datasets import mnist
+# from keras.datasets import mnist
 from keras.layers import Input, Dense, Reshape, Flatten, Dropout
 from keras.layers import BatchNormalization, Activation, ZeroPadding2D
 from keras.layers.advanced_activations import LeakyReLU
@@ -15,18 +15,24 @@ import sys
 import numpy as np
 
 class DCGAN():
-    def __init__(self):
+    def __init__(self,width=64, height=64):
         # Input shape
-        self.img_rows = 28
-        self.img_cols = 28
-        self.channels = 1
+        self.img_rows = width
+        self.img_cols = height
+        self.channels = 3 # this needs to be 3 channels for pokemon
         self.img_shape = (self.img_rows, self.img_cols, self.channels)
-        self.latent_dim = 100
+        self.latent_dim = 100 # #question why is this latent dimenson 100
 
-        optimizer = Adam(0.0002, 0.5)
+        # #question: what is this second value? beta or epsilon?
+        optimizer = Adam(0.0002, 0.5) # learning rate, and ?
 
         # Build and compile the discriminator
+
+        # build discirminator defines and returns a model. 
         self.discriminator = self.build_discriminator()
+
+        # compilation step configures the model for training. sets the loss, and optimizer
+        # loss - objective function , 
         self.discriminator.compile(loss='binary_crossentropy',
             optimizer=optimizer,
             metrics=['accuracy'])
@@ -35,8 +41,12 @@ class DCGAN():
         self.generator = self.build_generator()
 
         # The generator takes noise as input and generates imgs
-        z = Input(shape=(self.latent_dim,))
+        Gz = Input(shape=(100,))
         img = self.generator(z)
+
+
+        # this is what i hinted at earlier, having a pretrained discriminator.
+        # however, how do we load the pretrained weights?
 
         # For the combined model we will only train the generator
         self.discriminator.trainable = False
@@ -46,13 +56,14 @@ class DCGAN():
 
         # The combined model  (stacked generator and discriminator)
         # Trains the generator to fool the discriminator
-        self.combined = Model(z, valid)
+        self.combined = Model(Gz, valid)
         self.combined.compile(loss='binary_crossentropy', optimizer=optimizer)
 
     def build_generator(self):
 
         model = Sequential()
-
+        # why is a dense layer being used here?? why is there activations?
+        # why is the dimensions 128x7x7???
         model.add(Dense(128 * 7 * 7, activation="relu", input_dim=self.latent_dim))
         model.add(Reshape((7, 7, 128)))
         model.add(UpSampling2D())
